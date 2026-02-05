@@ -40,6 +40,10 @@ www/
 # Testing
 coverage/
 .nyc_output/
+TEST_GUIDE_MIC.md
+GITHUB_PUSH_GUIDE.md
+SETUP_GUIDE.md
+MOBILE_DEPLOYMENT.md
 
 # Security
 *.cert
