@@ -9,19 +9,22 @@ Since Localtunnel was unreliable, we are switching to **Direct LAN Testing**. Th
 ## Step 2: Connect Your Devices
 Ensure your phone(s) and your PC are on the **Same WiFi Network**.
 
-## Step 3: Solve the "Microphone" Problem (IMPORTANT)
-Modern phones block the microphone on `http://` links (they only like `https://`). To bypass this for testing:
+## Step 3: Solve the "Microphone" Problem (MANDATORY for Mobile)
+Modern phones block the microphone on `http://` links. To fix this in 30 seconds:
 
-### For Android (Chrome/Edge):
-1. Open Chrome on your phone.
-2. Type this into the address bar and press Enter: **`chrome://flags/#unsafely-treat-insecure-origin-as-secure`**
-3. In the box **"Insecure origins treated as secure"**, paste your server address:
-   - `http://192.168.0.124:8000` (Use **your** IP from Step 1)
-4. Change the dropdown from "Disabled" to **"Enabled"**.
-5. Click **"Relaunch"** at the bottom.
-6. Now, go to `http://192.168.0.124:8000` and the microphone will work perfectly!
+### 📱 For Android (Chrome/Edge):
+1.  Open Chrome on your phone.
+2.  Type **`chrome://flags`** in the address bar and press Enter.
+3.  In the search box at the top, type: **`insecure`**.
+4.  Find the flag: **"Insecure origins treated as secure"**.
+5.  In the text box below it, paste your server IP exactly:
+    - **`http://192.168.0.124:8000`**
+6.  Change the dropdown from "Disabled" to **"Enabled"**.
+7.  Click the blue **"Relaunch"** button at the bottom.
+8.  Now open **`http://192.168.0.124:8000`** — the mic will now work!
 
 ---
+
 
 ## 🚀 Professional Deployment (Permanent Fix)
 If you want a link that "just works" for everyone with HTTPS, the best solution is to deploy to a hosting service.

@@ -66,6 +66,7 @@ io.on('connection', (socket) => {
     // Audio Chunk Relay
     // Expected payload: { room: 'room-id', data: ArrayBuffer }
     socket.on('audio-chunk', (payload, callback) => {
+        // console.log(`Audio chunk from ${socket.id} for room ${payload.room}`);
         // Broadcast audio to everyone else in the room
         socket.to(payload.room).volatile.emit('audio-stream', {
             from: socket.id,
@@ -116,6 +117,33 @@ server.listen(PORT, '0.0.0.0', async () => {
         console.log(`Discovery: Auto-discovery (mDNS) could not start.`);
     }
 
+    // 2. Start UPnP (Automatic Port Forwarding)
+    try {
+        const natUpnp = require('nat-upnp');
+        const client = natUpnp.createClient();
+
+        client.portMapping({
+            public: parseInt(PORT),
+            private: parseInt(PORT),
+            ttl: 0
+        }, (err) => {
+            if (err) {
+                console.log(`UPnP: Port forwarding could not be established automatically (Check router settings).`);
+            } else {
+                console.log(`UPnP: Port ${PORT} has been successfully forwarded on your router.`);
+            }
+        });
+
+        // Cleanup on exit
+        process.on('SIGINT', () => {
+            client.portUnmapping({ public: parseInt(PORT) });
+            process.exit();
+        });
+    } catch (err) {
+        console.log(`UPnP: Error initializing port forwarding.`);
+    }
+
     console.log(`\nSimulation files at: /simulation/host.html & /simulation/listener.html`);
 });
+
 

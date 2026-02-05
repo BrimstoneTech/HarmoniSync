@@ -113,22 +113,38 @@ const app = {
     initAudio: async () => {
         app.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         await app.audioCtx.resume();
-        // Setup Button Listeners for PTT
+
         const btn = document.getElementById('talk-btn');
-        btn.onmousedown = app.startTalking;
-        btn.onmouseup = app.stopTalking;
-        btn.ontouchstart = (e) => { e.preventDefault(); app.startTalking(); };
-        btn.ontouchend = (e) => { e.preventDefault(); app.stopTalking(); };
+        btn.onclick = app.toggleTalk;
+
+        // Clear PTT listeners
+        btn.onmousedown = null;
+        btn.onmouseup = null;
+        btn.ontouchstart = null;
+        btn.ontouchend = null;
     },
 
+    toggleTalk: async () => {
+        if (!app.isSpeaking) {
+            await app.startTalking();
+        } else {
+            app.stopTalking();
+        }
+    },
+
+    isSpeaking: false,
+
     startTalking: async () => {
-        if (!app.audioCtx) return;
+        if (!app.audioCtx) await app.initAudio();
+        if (app.audioCtx.state === 'suspended') await app.audioCtx.resume();
+
         try {
             app.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const source = app.audioCtx.createMediaStreamSource(app.mediaStream);
             const processor = app.audioCtx.createScriptProcessor(4096, 1, 1);
 
             source.connect(processor);
+            // Critical: MUST connect to destination to trigger onaudioprocess on some browsers
             processor.connect(app.audioCtx.destination);
 
             processor.onaudioprocess = (e) => {
@@ -142,10 +158,17 @@ const app = {
                 app.visualize(input);
             };
 
-            app.worklet = { source, processor }; // Store to stop later
-            document.getElementById('talk-btn').classList.add('btn-speaking');
+            app.worklet = { source, processor };
+            app.isSpeaking = true;
 
-        } catch (e) { console.error(e); alert("Mic Access Denied"); }
+            const btn = document.getElementById('talk-btn');
+            btn.classList.add('btn-speaking');
+            btn.querySelector('span').innerText = 'STOP SPEAKING';
+
+        } catch (e) {
+            console.error("Microphone Error:", e);
+            alert("Mic Access Denied or Origin Insecure. Check TEST_GUIDE_LAN.md");
+        }
     },
 
     stopTalking: () => {
@@ -154,8 +177,13 @@ const app = {
             app.worklet.processor.disconnect();
             app.worklet.source.disconnect();
         }
-        document.getElementById('talk-btn').classList.remove('btn-speaking');
+        app.isSpeaking = false;
+
+        const btn = document.getElementById('talk-btn');
+        btn.classList.remove('btn-speaking');
+        btn.querySelector('span').innerText = 'TAP TO SPEAK';
     },
+
 
     playAudio: (buffer) => {
         if (!app.audioCtx) return;
