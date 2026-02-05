@@ -36,12 +36,23 @@ const app = {
             app.leaveRoom();
         });
 
-        app.socket.on('user-joined', (data) => {
-            console.log("User joined:", data.username);
+        app.socket.on('join-request', (u) => {
+            app.addRequest(u);
         });
 
-        app.socket.on('joined', (data) => {
-            console.log("Joined room:", data.room);
+        app.socket.on('waiting-room', () => {
+            app.nav('view-lobby');
+        });
+
+        app.socket.on('approved', (data) => {
+            app.role = data.role;
+            app.nav('view-room');
+            app.initAudio();
+        });
+
+        app.socket.on('denied', (data) => {
+            alert(data.reason);
+            app.nav('view-landing');
         });
 
         // Setup Visuals
@@ -82,22 +93,67 @@ const app = {
 
     join: (room) => {
         app.currentRoom = room;
+        // Host joins directly, listeners wait for approval
         app.socket.emit('join', { room, role: app.role, username: app.username });
 
         document.getElementById('room-id-display').innerText = room;
 
         // Show/Hide Host Panel
         const hostPanel = document.getElementById('host-panel');
+        const approvalPanel = document.getElementById('approval-panel');
+
         if (app.role === 'host') {
             hostPanel.classList.remove('hidden');
+            approvalPanel.classList.remove('hidden');
+            app.nav('view-room'); // Host navigates directly
+            app.initAudio(); // Host starts audio context
         } else {
             hostPanel.classList.add('hidden');
+            approvalPanel.classList.add('hidden');
+            // Listener waits for 'waiting-room' or 'approved' event to navigate
+        }
+    },
+
+    requests: [],
+
+    addRequest: (u) => {
+        app.requests.push(u);
+        app.renderRequests();
+    },
+
+    renderRequests: () => {
+        const list = document.getElementById('request-list');
+        if (!list) return; // Ensure the element exists
+        list.innerHTML = '';
+        if (app.requests.length === 0) {
+            list.innerHTML = '<div style="font-size: 0.8rem; opacity: 0.5;">No pending requests</div>';
+            return;
         }
 
-        app.nav('view-room');
+        app.requests.forEach(u => {
+            const item = document.createElement('div');
+            item.className = 'request-item';
+            item.innerHTML = `
+                <span>${u.username}</span>
+                <div class="request-actions">
+                    <button class="btn btn-primary btn-mini" onclick="app.approveUser('${u.id}')">Allow</button>
+                    <button class="btn btn-danger btn-mini" onclick="app.denyUser('${u.id}')">Deny</button>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    },
 
-        // Start Audio Context
-        app.initAudio();
+    approveUser: (userId) => {
+        app.socket.emit('approve-user', { room: app.currentRoom, userId });
+        app.requests = app.requests.filter(u => u.id !== userId);
+        app.renderRequests();
+    },
+
+    denyUser: (userId) => {
+        app.socket.emit('deny-user', { room: app.currentRoom, userId });
+        app.requests = app.requests.filter(u => u.id !== userId);
+        app.renderRequests();
     },
 
     participants: [],

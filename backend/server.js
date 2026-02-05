@@ -42,11 +42,33 @@ function getLocalIP() {
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
-    socket.on('join', ({ room, role, username }) => {
-        socket.join(room);
+    socket.on('join', (payload) => {
+        const { room, role, username } = payload;
 
         // Track room details
-        if (!rooms[room]) rooms[room] = { count: 0, hosts: 0, name: room, users: [] };
+        if (!rooms[room]) rooms[room] = { count: 0, hosts: 0, name: room, users: [], pending: [] };
+
+        if (role === 'host') {
+            joinRoomInternal(socket, room, role, username);
+            // If there are pending users, notify the new host
+            rooms[room].pending.forEach(u => {
+                socket.emit('join-request', u);
+            });
+        } else {
+            // Listeners ALWAYS need approval
+            console.log(`User ${username} (${socket.id}) queued for room ${room}`);
+            rooms[room].pending.push({ id: socket.id, username });
+
+            // Notify hosts in the room if they exist
+            socket.to(room).emit('join-request', { id: socket.id, username });
+            socket.emit('waiting-room', { room });
+        }
+    });
+
+    function joinRoomInternal(socket, room, role, username) {
+        socket.join(room);
+
+        if (!rooms[room]) rooms[room] = { count: 0, hosts: 0, name: room, users: [], pending: [] };
         rooms[room].count++;
         if (role === 'host') rooms[room].hosts++;
 
@@ -61,8 +83,30 @@ io.on('connection', (socket) => {
             users: rooms[room].users
         });
 
+        // Broadcast approved state to the user
+        socket.emit('approved', { room, role });
+
         // Broadcast updated room list to everyone (for the join screen)
         io.emit('room-list', Object.values(rooms));
+    }
+
+    socket.on('approve-user', ({ room, userId }) => {
+        const pendingUser = rooms[room]?.pending.find(u => u.id === userId);
+        if (pendingUser) {
+            rooms[room].pending = rooms[room].pending.filter(u => u.id !== userId);
+            const targetSocket = io.sockets.sockets.get(userId);
+            if (targetSocket) {
+                joinRoomInternal(targetSocket, room, 'listener', pendingUser.username);
+            }
+        }
+    });
+
+    socket.on('deny-user', ({ room, userId }) => {
+        rooms[room].pending = rooms[room].pending.filter(u => u.id !== userId);
+        const targetSocket = io.sockets.sockets.get(userId);
+        if (targetSocket) {
+            targetSocket.emit('denied', { reason: 'The host has denied your join request.' });
+        }
     });
 
     socket.on('get-rooms', () => {

@@ -53,8 +53,31 @@
             </div>
         </div>
 
-        <!-- VIEW 3: ROOM (MAIN) -->
+        <!-- VIEW 3: LOBBY (WAITING) -->
+        <div id="view-lobby" class="view">
+            <div class="card center-content" style="padding: 40px 20px;">
+                <div class="pulse-loader" style="margin-bottom: 20px;"></div>
+                <h3 class="neon-text">Waiting for Approval</h3>
+                <p style="opacity: 0.7; margin-top: 10px;">The host has been notified. Please wait while they let you
+                    in...
+                </p>
+                <button class="btn btn-secondary" onclick="app.leaveRoom()" style="margin-top: 30px;">Cancel
+                    Request</button>
+            </div>
+        </div>
+
+        <!-- VIEW 4: ROOM (MAIN) -->
         <div id="view-room" class="view">
+            <!-- HOST: JOIN REQUESTS -->
+            <div id="approval-panel" class="card glass-panel hidden"
+                style="border-color: var(--secondary); padding: 15px;">
+                <h4 style="margin-bottom: 10px; color: var(--secondary); font-size: 0.8rem; text-transform: uppercase;">
+                    User Requests</h4>
+                <div id="request-list">
+                    <!-- Populated by JS: u.username [Approve] [Deny] -->
+                </div>
+            </div>
+
             <!-- ROOM INFO & PARTICIPANTS -->
             <div class="card glass-panel" style="padding: 15px;">
                 <h4
