@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HarmoniSync LISTENER</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #e0e0e0;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #0077ff;
+        }
+
+        button {
+            background: #0077ff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 1rem;
+        }
+
+        button#speakBtn {
+            background: #ff9900;
+        }
+
+        .info {
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        #status {
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>HarmoniSync Listener</h1>
+        <div class="info">Server: <input type="text" id="serverIp" placeholder="e.g. 192.168.1.X:8000"></div>
+
+        <button id="joinBtn">Join Audio Room</button>
+        <button id="speakBtn" disabled>Hold to Speak</button>
+
+        <div id="status">Disconnected</div>
+    </div>
+
+    <script>
+        const defaultIp = window.location.hostname + ":" + window.location.port;
+        document.getElementById('serverIp').value = defaultIp;
+
+        let socket;
+        let audioCtx;
+        let nextTime = 0;
+
+        // Push to Talk vars
+        let micStream;
+        let micProcessor;
+
+        const joinBtn = document.getElementById('joinBtn');
+        const speakBtn = document.getElementById('speakBtn');
+        const statusEl = document.getElementById('status');
+
+        joinBtn.onclick = async () => {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            await audioCtx.resume();
+
+            const ip = document.getElementById('serverIp').value;
+            const url = ip.startsWith('http') ? ip : `http://${ip}`;
+
+            socket = io(url);
+
+            socket.on('connect', () => {
+                statusEl.innerText = "Connected! Waiting for Audio...";
+                socket.emit('join', { room: 'demo-room', role: 'listener' });
+                joinBtn.disabled = true;
+                speakBtn.disabled = false; // Enable "Speak" button
+            });
+
+            socket.on('audio-stream', (packet) => {
+                playAudioChunk(packet.data);
+                statusEl.innerText = "Received Audio from " + packet.from.substr(0, 4);
+            });
+        };
+
+        function playAudioChunk(arrayBuffer) {
+            const floatData = new Float32Array(arrayBuffer);
+            const buffer = audioCtx.createBuffer(1, floatData.length, audioCtx.sampleRate);
+            buffer.copyToChannel(floatData, 0);
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+
+            // Basic Jitter Handling: Ensure we schedule ahead of current time
+            const now = audioCtx.currentTime;
+            // If nextTime is in the past, reset it to now (handling networking gaps)
+            if (nextTime < now) nextTime = now;
+
+            source.start(nextTime);
+            // Advance nextTime by buffer duration
+            nextTime += buffer.duration;
+        }
+
+        // Push to Talk
+        speakBtn.onmousedown = startSpeaking;
+        speakBtn.onmouseup = stopSpeaking;
+        speakBtn.ontouchstart = (e) => { e.preventDefault(); startSpeaking(); };
+        speakBtn.ontouchend = (e) => { e.preventDefault(); stopSpeaking(); };
+
+        async function startSpeaking() {
+            if (!audioCtx) return;
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = audioCtx.createMediaStreamSource(micStream);
+                micProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
+
+                source.connect(micProcessor);
+                micProcessor.connect(audioCtx.destination);
+
+                micProcessor.onaudioprocess = (e) => {
+                    const input = e.inputBuffer.getChannelData(0);
+                    socket.emit('audio-chunk', { room: 'demo-room', data: input.buffer });
+                };
+                speakBtn.innerText = "Broadcasting...";
+            } catch (e) { console.error(e); }
+        }
+
+        function stopSpeaking() {
+            if (micStream) micStream.getTracks().forEach(t => t.stop());
+            if (micProcessor) micProcessor.disconnect();
+            speakBtn.innerText = "Hold to Speak";
+        }
+
+    </script>
+</body>
+
+</html>

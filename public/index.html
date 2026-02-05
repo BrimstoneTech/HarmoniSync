@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HarmoniSync</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <!-- Background Decor -->
+    <img src="assets/note1.svg" class="floating-note note-1">
+    <img src="assets/note2.svg" class="floating-note note-2">
+    <img src="assets/note3.svg" class="floating-note note-3">
+
+    <div class="app-container">
+        <header>
+            <img src="assets/logo.svg" alt="Logo" class="app-logo">
+            <h1>HarmoniSync</h1>
+        </header>
+
+        <!-- VIEW 1: LANDING -->
+        <div id="view-landing" class="view active">
+            <div class="card glass-panel">
+                <input type="text" id="username" placeholder="Enter your name" maxlength="15">
+
+                <h3
+                    style="margin: 15px 0; color: #ddd; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+                    Active Rooms</h3>
+                <div id="room-list-container" class="room-list">
+                    <!-- Populated by JS -->
+                    <div style="padding: 10px; color: #777;">Scanning for rooms...</div>
+                </div>
+
+                <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                    <input type="text" id="new-room-name" placeholder="New Room Name (Optional)"
+                        style="margin-bottom: 10px;">
+                    <button class="btn btn-primary" onclick="app.createRoom()">+ Create New Room</button>
+                    <!-- <button class="btn btn-secondary" onclick="app.showJoin()">Enter IP Address</button> -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: JOIN IP (Legacy/Manual) -->
+        <div id="view-join" class="view">
+            <div class="card">
+                <h3>Manual Connection</h3>
+                <input type="text" id="room-ip" placeholder="Host IP (e.g. 192.168.0.x)">
+                <button class="btn btn-primary" onclick="app.joinRoom(null)">Connect</button>
+                <button class="btn btn-secondary" onclick="app.nav('view-landing')">Back</button>
+            </div>
+        </div>
+
+        <!-- VIEW 3: ROOM (MAIN) -->
+        <div id="view-room" class="view">
+            <div class="card center-content">
+                <h2 id="room-id-display" class="neon-text">Room Active</h2>
+                <p id="connection-status">Connected</p>
+                <canvas id="visualizer"></canvas>
+            </div>
+
+            <!-- Speaking Indicator -->
+            <div id="speaking-display" class="speaker-indicator hidden">
+                <div class="indicator-dot"></div>
+                <span id="speaker-name" style="font-weight: bold;">User</span> is speaking...
+            </div>
+
+            <div style="flex: 1;"></div>
+
+            <!-- PUSH TO TALK -->
+            <button id="talk-btn" class="btn btn-primary btn-large glow-effect">
+                <img src="assets/logo.svg" style="height: 30px; filter: invert(1); margin-right: 10px;">
+                <span>Hold to Speak</span>
+            </button>
+
+            <button class="btn btn-danger" onclick="app.leaveRoom()" style="margin-top: 10px;">Leave Room</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
