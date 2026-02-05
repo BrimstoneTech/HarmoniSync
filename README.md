@@ -101,5 +101,6 @@ HarmoniSync/
 MIT
 
 ## Author
+TaiSan - BrimstoneTech - Founder
 
 Your Name
