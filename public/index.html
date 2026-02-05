@@ -77,6 +77,18 @@
                 <span id="speaker-name" style="font-weight: bold;">User</span> is speaking...
             </div>
 
+            <!-- AUDIO ENHANCEMENT TOGGLE -->
+            <div class="card glass-panel"
+                style="padding: 10px 15px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 0.9rem; opacity: 0.8;">✨ Clean Audio</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="enhance-toggle" onchange="app.toggleEnhancement()">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
             <div style="flex: 1;"></div>
 
             <!-- HOST CONTROLS (Hidden by default) -->

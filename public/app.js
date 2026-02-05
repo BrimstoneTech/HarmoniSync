@@ -7,6 +7,7 @@ const app = {
     currentRoom: null,
     mediaStream: null,
     worklet: null,
+    enhanceEnabled: false,
 
     init: () => {
         // Connect to IO immediately to get room lists
@@ -186,7 +187,31 @@ const app = {
             const source = app.audioCtx.createMediaStreamSource(app.mediaStream);
             const processor = app.audioCtx.createScriptProcessor(4096, 1, 1);
 
-            source.connect(processor);
+            let lastNode = source;
+
+            // Apply Enhancement Chain if enabled
+            if (app.enhanceEnabled) {
+                // 1. High Pass Filter (Removes background rumble/hum)
+                const filter = app.audioCtx.createBiquadFilter();
+                filter.type = "highpass";
+                filter.frequency.setValueAtTime(100, app.audioCtx.currentTime);
+
+                // 2. Compressor (Normalizes volume, prevents clipping)
+                const compressor = app.audioCtx.createDynamicsCompressor();
+                compressor.threshold.setValueAtTime(-24, app.audioCtx.currentTime);
+                compressor.knee.setValueAtTime(40, app.audioCtx.currentTime);
+                compressor.ratio.setValueAtTime(12, app.audioCtx.currentTime);
+                compressor.attack.setValueAtTime(0, app.audioCtx.currentTime);
+                compressor.release.setValueAtTime(0.25, app.audioCtx.currentTime);
+
+                lastNode.connect(filter);
+                filter.connect(compressor);
+                lastNode = compressor;
+
+                app.filterNodes = { filter, compressor };
+            }
+
+            lastNode.connect(processor);
             // Critical: MUST connect to destination to trigger onaudioprocess on some browsers
             processor.connect(app.audioCtx.destination);
 
@@ -220,11 +245,26 @@ const app = {
             app.worklet.processor.disconnect();
             app.worklet.source.disconnect();
         }
+        if (app.filterNodes) {
+            app.filterNodes.filter.disconnect();
+            app.filterNodes.compressor.disconnect();
+            app.filterNodes = null;
+        }
         app.isSpeaking = false;
 
         const btn = document.getElementById('talk-btn');
         btn.classList.remove('btn-speaking');
         btn.querySelector('span').innerText = 'TAP TO SPEAK';
+    },
+
+    toggleEnhancement: () => {
+        app.enhanceEnabled = document.getElementById('enhance-toggle').checked;
+        console.log("Audio Enhancement:", app.enhanceEnabled);
+        // If speaking, restart to apply filters
+        if (app.isSpeaking) {
+            app.stopTalking();
+            app.startTalking();
+        }
     },
 
 
