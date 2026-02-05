@@ -2,10 +2,15 @@
 node_modules/
 package-lock.json
 
-# Environment variables
+# Environment variables and secrets
 .env
 .env.local
 .env.*.local
+*.key
+*.pem
+*.p12
+*.mobileprovision
+config/secrets.json
 
 # OS files
 .DS_Store
@@ -25,3 +30,20 @@ build/
 # Temporary files
 *.tmp
 .cache/
+
+# Mobile build artifacts
+android/
+ios/
+capacitor.config.json.backup
+www/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Security
+*.cert
+*.crt
+*.cer
+*.der
+credentials/

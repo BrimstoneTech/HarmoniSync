@@ -1,0 +1,20 @@
+{
+    "name": "harmonisync-mobile",
+    "version": "1.0.0",
+    "description": "HarmoniSync Mobile Wrapper",
+    "scripts": {
+        "start": "node backend/server.js",
+        "cap:init": "npx cap init",
+        "cap:add:android": "npx cap add android",
+        "cap:sync": "npx cap sync",
+        "cap:open:android": "npx cap open android",
+        "cap:build": "npx cap copy && npx cap sync",
+        "android:dev": "npm run cap:sync && npm run cap:open:android"
+    },
+    "dependencies": {
+        "@capacitor/android": "^6.0.0",
+        "@capacitor/core": "^6.0.0",
+        "@capacitor/cli": "^6.0.0"
+    },
+    "devDependencies": {}
+}
