@@ -55,9 +55,19 @@
 
         <!-- VIEW 3: ROOM (MAIN) -->
         <div id="view-room" class="view">
+            <!-- ROOM INFO & PARTICIPANTS -->
+            <div class="card glass-panel" style="padding: 15px;">
+                <h4
+                    style="margin-bottom: 10px; opacity: 0.8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">
+                    Room Members</h4>
+                <div id="participant-list" class="participant-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
             <div class="card center-content">
                 <h2 id="room-id-display" class="neon-text">Room Active</h2>
-                <p id="connection-status">Connected</p>
+                <p id="connection-status" style="margin-bottom: 10px; font-size: 0.8rem; opacity: 0.6;">Connected</p>
                 <canvas id="visualizer"></canvas>
             </div>
 
@@ -69,14 +79,23 @@
 
             <div style="flex: 1;"></div>
 
+            <!-- HOST CONTROLS (Hidden by default) -->
+            <div id="host-panel" class="hidden" style="width: 100%; margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="app.endSession()"
+                    style="border-color: #ff4444; color: #ff4444;">
+                    ⚠️ End Session for All
+                </button>
+            </div>
+
             <!-- PUSH TO TALK -->
             <button id="talk-btn" class="btn btn-primary btn-large glow-effect">
                 <img src="assets/logo.svg" style="height: 30px; filter: invert(1); margin-right: 10px;">
                 <span>Tap to Speak</span>
             </button>
 
+            <button class="btn btn-secondary" onclick="app.leaveRoom()" style="margin-top: 10px; opacity: 0.7;">Leave
+                Room</button>
 
-            <button class="btn btn-danger" onclick="app.leaveRoom()" style="margin-top: 10px;">Leave Room</button>
         </div>
     </div>
 

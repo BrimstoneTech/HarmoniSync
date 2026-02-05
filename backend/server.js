@@ -46,14 +46,20 @@ io.on('connection', (socket) => {
         socket.join(room);
 
         // Track room details
-        if (!rooms[room]) rooms[room] = { count: 0, hosts: 0, name: room };
+        if (!rooms[room]) rooms[room] = { count: 0, hosts: 0, name: room, users: [] };
         rooms[room].count++;
         if (role === 'host') rooms[room].hosts++;
 
+        // Add user to participant list
+        rooms[room].users.push({ id: socket.id, username, role });
+
         console.log(`Socket ${socket.id} joined room ${room} as ${role} (${username})`);
 
-        // Notify others
-        socket.to(room).emit('user-joined', { id: socket.id, role, username });
+        // Notify room members with updated participant list
+        io.to(room).emit('room-update', {
+            name: room,
+            users: rooms[room].users
+        });
 
         // Broadcast updated room list to everyone (for the join screen)
         io.emit('room-list', Object.values(rooms));
@@ -63,6 +69,15 @@ io.on('connection', (socket) => {
         socket.emit('room-list', Object.values(rooms));
     });
 
+    // Host Controls
+    socket.on('session-end', (room) => {
+        // Simple trust-based check: in a real app, we'd verify the socket.id is the host
+        io.to(room).emit('kicked', { reason: 'Host ended the session' });
+        console.log(`Room ${room} ended by host.`);
+        delete rooms[room];
+        io.emit('room-list', Object.values(rooms));
+    });
+
     // Audio Chunk Relay
     // Expected payload: { room: 'room-id', data: ArrayBuffer }
     socket.on('audio-chunk', (payload, callback) => {
@@ -70,7 +85,6 @@ io.on('connection', (socket) => {
         // Broadcast audio to everyone else in the room
         socket.to(payload.room).volatile.emit('audio-stream', {
             from: socket.id,
-            // We can add username here if we track it in a socket-map
             data: payload.data
         });
         if (callback) callback();
@@ -81,18 +95,25 @@ io.on('connection', (socket) => {
         for (const room of socket.rooms) {
             if (rooms[room]) {
                 rooms[room].count--;
+                // Remove user from the list
+                rooms[room].users = rooms[room].users.filter(u => u.id !== socket.id);
+
                 // If the room becomes empty, delete it
                 if (rooms[room].count <= 0) {
                     delete rooms[room];
                 } else {
-                    // Notify others in the room that a user left
-                    io.to(room).emit('user-left', { id: socket.id });
+                    // Update remaining users
+                    io.to(room).emit('room-update', {
+                        name: room,
+                        users: rooms[room].users
+                    });
                 }
             }
         }
         // Broadcast updated room list to everyone
         io.emit('room-list', Object.values(rooms));
     });
+
 
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id);

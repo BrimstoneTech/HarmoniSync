@@ -299,3 +299,41 @@ canvas {
 .hidden {
     display: none !important;
 }
+
+/* Participant List */
+.participant-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.participant-badge {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: fadeIn 0.3s;
+}
+
+.participant-badge .role-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #888;
+}
+
+.badge-host {
+    border-color: var(--primary);
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.badge-host .role-dot {
+    background: var(--primary);
+    box-shadow: 0 0 5px var(--primary);
+}

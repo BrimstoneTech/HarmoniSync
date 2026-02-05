@@ -26,6 +26,15 @@ const app = {
             app.showSpeaker(packet.from);
         });
 
+        app.socket.on('room-update', (data) => {
+            app.renderParticipants(data.users);
+        });
+
+        app.socket.on('kicked', (data) => {
+            alert(data.reason);
+            app.leaveRoom();
+        });
+
         app.socket.on('user-joined', (data) => {
             console.log("User joined:", data.username);
         });
@@ -75,10 +84,44 @@ const app = {
         app.socket.emit('join', { room, role: app.role, username: app.username });
 
         document.getElementById('room-id-display').innerText = room;
+
+        // Show/Hide Host Panel
+        const hostPanel = document.getElementById('host-panel');
+        if (app.role === 'host') {
+            hostPanel.classList.remove('hidden');
+        } else {
+            hostPanel.classList.add('hidden');
+        }
+
         app.nav('view-room');
 
         // Start Audio Context
         app.initAudio();
+    },
+
+    participants: [],
+
+    renderParticipants: (users) => {
+        app.participants = users;
+        const list = document.getElementById('participant-list');
+        if (!list) return;
+
+        list.innerHTML = '';
+        users.forEach(u => {
+            const badge = document.createElement('div');
+            badge.className = `participant-badge ${u.role === 'host' ? 'badge-host' : ''}`;
+            badge.innerHTML = `
+                <div class="role-dot"></div>
+                <span>${u.username} ${u.id === app.socket.id ? '(You)' : ''}</span>
+            `;
+            list.appendChild(badge);
+        });
+    },
+
+    endSession: () => {
+        if (confirm("Are you sure you want to end this session for everyone?")) {
+            app.socket.emit('session-end', app.currentRoom);
+        }
     },
 
     leaveRoom: () => {
@@ -203,7 +246,10 @@ const app = {
         const el = document.getElementById('speaking-display');
         const nameEl = document.getElementById('speaker-name');
         el.classList.remove('hidden');
-        nameEl.innerText = id.substr(0, 4); // Use logic to map ID to Name later
+
+        // Find username from participants list
+        const user = app.participants.find(u => u.id === id);
+        nameEl.innerText = user ? user.username : id.substr(0, 4);
 
         clearTimeout(app.speakerTimeout);
         app.speakerTimeout = setTimeout(() => {
