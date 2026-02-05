@@ -116,37 +116,6 @@ server.listen(PORT, '0.0.0.0', async () => {
         console.log(`Discovery: Auto-discovery (mDNS) could not start.`);
     }
 
-    // 2. Start Localtunnel for Universal Access (Firewall-Punching)
-    try {
-        const localtunnel = require('localtunnel');
-        const tunnel = await localtunnel({
-            port: parseInt(PORT),
-            subdomain: `harmonisync-${Math.floor(Math.random() * 9000) + 1000}`
-        });
-
-        // Fetch Public IP for the Tunnel Password
-        let publicIp = 'unknown';
-        try {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
-            publicIp = data.ip;
-        } catch (e) {
-            publicIp = ip; // Fallback to local IP if fetch fails
-        }
-
-        console.log(`\n=== UNIVERSAL ACCESS LINK (No Firewall Required) ===`);
-        console.log(`Public: ${tunnel.url}/index.html`);
-        console.log(`\n🔒 TUNNEL PASSWORD (One-time entry on phone): ${publicIp}`);
-        console.log(`Note: Enter this IP when the 'Friendly Reminder' page appears on your phone.`);
-
-        tunnel.on('close', () => {
-            console.log('Universal link closed.');
-        });
-    } catch (err) {
-        console.log(`\nUniversal Link: Could not establish a public tunnel (Localtunnel error).`);
-    }
-
-
-
     console.log(`\nSimulation files at: /simulation/host.html & /simulation/listener.html`);
 });
+
