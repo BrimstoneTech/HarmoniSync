@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HarmoniSync</string>
+    <string name="title_activity_main">HarmoniSync</string>
+    <string name="package_name">com.harmonisync.app</string>
+    <string name="custom_url_scheme">com.harmonisync.app</string>
+</resources>

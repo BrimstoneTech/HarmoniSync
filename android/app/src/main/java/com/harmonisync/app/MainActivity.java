@@ -1,0 +1,5 @@
+package com.harmonisync.app;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}

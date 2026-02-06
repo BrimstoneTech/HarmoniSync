@@ -1,53 +1,7 @@
-# Dependencies
 node_modules/
-package-lock.json
-
-# Environment variables and secrets
-.env
-.env.local
-.env.*.local
-*.key
-*.pem
-*.p12
-*.mobileprovision
-config/secrets.json
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Build outputs
 dist/
 build/
-*.log
-
-# IDE
+.env
+.DS_Store
+Thumbs.db
 .vscode/
-.idea/
-*.swp
-*.swo
-
-# Temporary files
-*.tmp
-.cache/
-
-# Mobile build artifacts
-android/
-ios/
-capacitor.config.json.backup
-www/
-
-# Testing
-coverage/
-.nyc_output/
-TEST_GUIDE_MIC.md
-GITHUB_PUSH_GUIDE.md
-SETUP_GUIDE.md
-MOBILE_DEPLOYMENT.md
-
-# Security
-*.cert
-*.crt
-*.cer
-*.der
-credentials/
